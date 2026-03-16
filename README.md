@@ -36,18 +36,39 @@ A full-stack resume screening system built with Machine Learning + AI. Designed 
 ## 📁 Project Structure
 
 ```
-resume-screener/
-├── app.py                    ← FastAPI backend (all endpoints)
-├── resume_model.pkl          ← Trained ML model
-├── categories.pkl            ← Job categories list
-├── resume_screening.ipynb    ← ML training notebook
-├── Resume.csv                ← Training dataset
-├── .env                      ← API keys (never commit this!)
-├── venv/                     ← Python virtual environment
+ScreenIQ/
+├── app.py                        ← FastAPI backend (all endpoints)
+├── resume_model.pkl              ← Trained ML model
+├── categories.pkl                ← Job categories list
+├── resume_screening.ipynb        ← ML training notebook
+├── learn.py                      ← ML experimentation script
+├── Resume.csv                    ← Training dataset
+├── .env                          ← API keys (never commit this!)
+├── venv/                         ← Python virtual environment
 └── frontend/
+    ├── index.html
+    ├── vite.config.js
+    ├── package.json
+    ├── public/
     └── src/
-        ├── App.jsx           ← Full React app (all 3 pages)
-        └── main.jsx          ← Entry point
+        ├── App.jsx               ← Router (landing / recruiter / jobseeker)
+        ├── main.jsx              ← Entry point
+        ├── styles/
+        │   └── global.css        ← CSS variables, animations, base styles
+        ├── constants/
+        │   └── sampleData.js     ← Sample resumes and JDs
+        ├── pages/
+        │   ├── LandingPage.jsx
+        │   ├── RecruiterPage.jsx
+        │   └── JobSeekerPage.jsx
+        └── components/
+            ├── ui/
+            │   ├── PageWrapper.jsx    ← Shared page shell + LiveBadge
+            │   ├── PixelScoreBar.jsx  ← BigScore + PixelScoreBar
+            │   └── Decorations.jsx   ← FloatingPixels + PixelGrid
+            └── results/
+                ├── RecruiterResults.jsx
+                └── JobSeekerResults.jsx
 ```
 
 ---
@@ -62,7 +83,23 @@ http://127.0.0.1:8000
 ### GET /
 Health check
 ```json
-Response: { "message": "Resume Screener API v3.0 🚀" }
+{ "message": "Resume Screener API v3.0 🚀" }
+```
+
+---
+
+### POST /extract
+Upload a PDF or DOCX file and extract its text.
+
+**Request:** `multipart/form-data` with a `file` field.
+
+**Response:**
+```json
+{
+  "extracted_text": "John Doe\nEmail: ...",
+  "word_count": 312,
+  "file_type": "PDF"
+}
 ```
 
 ---
@@ -177,11 +214,11 @@ Analyze a resume from a job seeker's perspective.
 ---
 
 ### GET /categories
-Returns all 22 job categories the ML model can predict.
+Returns all job categories the ML model can predict.
 
 ```json
 {
-  "categories": ["ACCOUNTANT", "ADVOCATE", "ARTS", "AVIATION", "BANKING", "BUSINESS-DEVELOPMENT", "CHEF", "CONSULTANT", "DESIGNER", "DIGITAL-MEDIA", "ENGINEERING", "FITNESS", "FINANCE", "HEALTHCARE", "HR", "INFORMATION-TECHNOLOGY", "PUBLIC-RELATIONS", "SALES", "TEACHER", "...]
+  "categories": ["ACCOUNTANT", "ADVOCATE", "ARTS", "AVIATION", "BANKING", "BUSINESS-DEVELOPMENT", "CHEF", "CONSULTANT", "DESIGNER", "DIGITAL-MEDIA", "ENGINEERING", "FITNESS", "FINANCE", "HEALTHCARE", "HR", "INFORMATION-TECHNOLOGY", "PUBLIC-RELATIONS", "SALES", "TEACHER", "CONSTRUCTION", "AGRICULTURE", "FITNESS"]
 }
 ```
 
@@ -220,8 +257,8 @@ Returns all 22 job categories the ML model can predict.
 
 ### Step 1 — Clone the repo
 ```bash
-git clone https://github.com/yourusername/resume-screener.git
-cd resume-screener
+git clone https://github.com/ShreyYadav005/ScreenIQ.git
+cd ScreenIQ
 ```
 
 ### Step 2 — Set up Python virtual environment
@@ -237,7 +274,7 @@ source venv/bin/activate
 
 ### Step 3 — Install Python dependencies
 ```bash
-pip install fastapi uvicorn python-multipart joblib scikit-learn numpy pandas groq python-dotenv httpx
+pip install fastapi uvicorn python-multipart joblib scikit-learn numpy pandas groq python-dotenv pymupdf python-docx
 ```
 
 ### Step 4 — Set up API keys
@@ -262,7 +299,13 @@ cd frontend
 npm install
 ```
 
-### Step 7 — Start the frontend
+### Step 7 — Create frontend environment file
+Create a `.env` file inside the `frontend/` folder:
+```
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+### Step 8 — Start the frontend
 ```bash
 npm run dev
 ```
@@ -274,25 +317,27 @@ Frontend runs at: `http://localhost:5173`
 
 1. Open `http://localhost:5173` in your browser
 2. Choose **"I AM A... JOB SEEKER"** or **"RECRUITER"**
-3. Paste a resume and optionally a job description
+3. Paste a resume and job description (both required for recruiter mode)
 4. Click **Analyze** and get instant AI-powered results
 
 ---
 
 ## 🔑 Environment Variables
 
-| Variable | Description | Where to get it |
-|----------|-------------|-----------------|
-| `GROQ_API_KEY` | Groq AI API key for LLM feedback | https://console.groq.com/ |
+| Variable | Location | Description | Where to get it |
+|----------|----------|-------------|-----------------|
+| `GROQ_API_KEY` | root `.env` | Groq AI API key | https://console.groq.com/ |
+| `VITE_API_URL` | `frontend/.env` | Backend API URL | Set to `http://127.0.0.1:8000` for local dev |
 
 ---
 
 ## ⚠️ Important Notes
 
-- Never commit your `.env` file to GitHub — add it to `.gitignore`
-- The `resume_model.pkl` file must be present in the root folder for the API to work
+- Never commit your `.env` files to GitHub — they are in `.gitignore`
+- `resume_model.pkl` and `categories.pkl` must be present in the root folder
 - Keep the backend running (`uvicorn`) while using the frontend
 - The Groq API is free but has rate limits on the free tier
+- If you move or rename the project folder on Windows, recreate the `venv` — paths are hardcoded at creation time
 
 ---
 
@@ -311,8 +356,10 @@ The ML model can predict 22 job categories:
 - [Groq](https://groq.com/) — Free LLM API (Llama 3.3 70B)
 - [React](https://react.dev/) — Frontend framework
 - [Vite](https://vitejs.dev/) — Frontend build tool
+- [PyMuPDF](https://pymupdf.readthedocs.io/) — PDF text extraction
+- [python-docx](https://python-docx.readthedocs.io/) — DOCX text extraction
 - [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) — Pixel font
 
 ---
 
-*Built with ❤️ — ScreenIQ v3.0*
+*Built with ❤️ — ScreenIQ v1.0.0*
