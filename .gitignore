@@ -1,1 +1,21 @@
+# Virtual Environment
+venv/
+
+# Environment Variables (API keys - never push this!)
 .env
+
+# Python cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
